@@ -1,21 +1,25 @@
 ---
 name: dotfiles
 description: >-
-  Manage the shared zsh + Claude Code dotfiles in /Users/Shared/dotfiles (a git repo
-  symlinked into each macOS account). Use when adding a CLI tool's shell init ("I
-  installed deno/nvm/bun/rust"), re-adding optional shell add-ons or ls colors,
-  onboarding a new macOS account, or otherwise changing the shared shell/Claude config.
+  Manage the shared zsh + Claude Code dotfiles repo at /Users/Shared/dotfiles (this is a
+  project skill living in that repo). Use when adding a CLI tool's shell init ("I installed
+  deno/nvm/bun/rust"), re-adding optional shell add-ons or ls colors, promoting a new
+  powerlevel10k prompt config, bumping the p10k submodule, or otherwise changing the shared config.
 ---
 
 # dotfiles — shared shell + Claude Code config
 
-This Mac shares one source-of-truth config between multiple macOS user accounts.
+This Mac shares one source-of-truth config between multiple macOS user accounts. (First-time machine
+**setup/bootstrap lives in the repo README**; this skill is for changes you make while Claude Code is
+already running inside the repo.)
 
 - **Source of truth:** `/Users/Shared/dotfiles` — a **git repo**, owned by `max`, mode `755`
   (every account reads; only `max` edits/commits).
-- **Deployed via symlinks** into each account's `$HOME` (see `scripts/link-account.sh`).
-- **Layout:** `zsh/` (`.zprofile`, `.zshrc`, `.p10k.zsh`, `powerlevel10k/`),
-  `claude/` (`settings.json`, `statusline.sh`, `skills/dotfiles/`).
+- **This is a project skill** (`.claude/skills/dotfiles/`): it loads whenever `claude` runs inside this repo.
+- **Config is deployed via symlinks** into each account by `scripts/link-account.sh` (zsh files → `$HOME`,
+  `settings.json`/`statusline.sh` → `~/.claude`). The skill itself is NOT symlinked.
+- **Layout:** `zsh/` (`.zprofile`, `.zshrc`, `.p10k.zsh`, `powerlevel10k/` submodule),
+  `claude/` (`settings.json`, `statusline.sh`), `.claude/skills/dotfiles/` (this skill).
 
 When you change anything here, **commit it**: `git -C /Users/Shared/dotfiles add -A && git -C /Users/Shared/dotfiles commit -m "..."`.
 
@@ -56,25 +60,19 @@ Key facts:
 See [reference.md](reference.md) for zsh-autosuggestions, zsh-syntax-highlighting, and custom
 ls/completion colors (all were intentionally left out of the lean base). Same edit + commit flow.
 
-## Procedure: onboard a new macOS account
+## Procedure: promote a new prompt config
 
-On the new account, run:
-`zsh ${CLAUDE_SKILL_DIR}/scripts/link-account.sh`
-This backs up any existing real dotfiles, creates the symlinks from `/Users/Shared`, and inits the
-powerlevel10k submodule if missing. Then: install Claude Code (native installer) and log in; if the prompt isn't
-configured yet, run `p10k configure`. Homebrew + the shared repo already exist machine-wide.
-
-## Procedure: (re)configure the prompt
-`p10k configure` writes a **real** `~/.p10k.zsh`, replacing the repo symlink. Promote it back:
-`zsh ${CLAUDE_SKILL_DIR}/scripts/promote-p10k.sh` — moves it into `zsh/.p10k.zsh`, re-symlinks, commits.
-(New accounts never run the wizard; `link-account.sh` symlinks the shared config for them.)
+Changing the prompt is a **user** action — they run `p10k configure` (or delete `~/.p10k.zsh`, which makes
+powerlevel10k auto-launch the wizard on the next shell). That writes a **real** `~/.p10k.zsh`, replacing the
+repo symlink. The skill's only job is to **promote** it back into the repo:
+`zsh ${CLAUDE_SKILL_DIR}/scripts/promote-p10k.sh` — moves it into `zsh/.p10k.zsh`, re-symlinks, and commits.
+(New accounts never touch the wizard — they inherit the committed `.p10k.zsh` via `link-account.sh`.)
 
 ## Notes
-- `~/.p10k.zsh` is the prompt config (from `p10k configure`); (re)promote it with
-  `scripts/promote-p10k.sh` (see "(re)configure the prompt" above). New accounts inherit it read-only via
-  `link-account.sh` and can keep a real `~/.p10k.zsh` to diverge.
-- powerlevel10k is a git **submodule** (pinned commit, tracked in this repo). Update it with:
+- `scripts/link-account.sh` (re)creates this account's symlinks + inits the p10k submodule. It's a setup
+  step — see the repo **README** for first-time machine bootstrap.
+- powerlevel10k is a git **submodule** (pinned commit). Update with:
   `git -C /Users/Shared/dotfiles/zsh/powerlevel10k pull origin master` then
   `git -C /Users/Shared/dotfiles add zsh/powerlevel10k && git -C /Users/Shared/dotfiles commit -m "p10k: bump"`.
-  A fresh clone of this repo needs `git submodule update --init --recursive`.
+  A fresh clone needs `git submodule update --init --recursive`.
 - Never put secrets here. Claude auth lives in the macOS Keychain; `~/.claude.json` stays per-account.

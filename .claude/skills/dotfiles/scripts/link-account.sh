@@ -28,11 +28,10 @@ link "$SHARED/zsh/.zshrc"    "$HOME/.zshrc"
 # ~/.p10k.zsh only once it exists in the repo (created by `p10k configure`, then promoted).
 [[ -e "$SHARED/zsh/.p10k.zsh" ]] && link "$SHARED/zsh/.p10k.zsh" "$HOME/.p10k.zsh"
 
-# Claude Code
-mkdir -p "$HOME/.claude/skills"
-link "$SHARED/claude/settings.json"   "$HOME/.claude/settings.json"
-link "$SHARED/claude/statusline.sh"   "$HOME/.claude/statusline.sh"
-link "$SHARED/claude/skills/dotfiles" "$HOME/.claude/skills/dotfiles"
+# Claude Code user-level config
+mkdir -p "$HOME/.claude"
+link "$SHARED/claude/settings.json" "$HOME/.claude/settings.json"
+link "$SHARED/claude/statusline.sh" "$HOME/.claude/statusline.sh"
 
 echo
 echo "Done. Open a new shell (or 'exec zsh')."
