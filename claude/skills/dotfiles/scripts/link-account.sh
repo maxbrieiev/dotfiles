@@ -16,10 +16,10 @@ link() {  # link <target> <linkpath>
   echo "linked:    $2 -> $1"
 }
 
-# Ensure powerlevel10k is present (gitignored dependency).
-if [[ ! -d "$SHARED/zsh/powerlevel10k" ]]; then
-  echo "cloning powerlevel10k..."
-  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$SHARED/zsh/powerlevel10k"
+# Ensure the powerlevel10k submodule is checked out (relevant on a fresh repo clone).
+if [[ ! -e "$SHARED/zsh/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+  echo "initializing powerlevel10k submodule..."
+  git -C "$SHARED" submodule update --init --recursive zsh/powerlevel10k
 fi
 
 # zsh

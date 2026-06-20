@@ -1,6 +1,3 @@
-# Vendored tool repo — a dependency, not our config. The bootstrap clones it.
-zsh/powerlevel10k/
-
 # One-time reference stashes and pre-migration backups
 *.old-reference
 *.pre-migration.bak
