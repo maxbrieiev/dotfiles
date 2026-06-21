@@ -29,17 +29,16 @@
     "defaultMode": "default"
   },
   "model": "opus[1m]",
+  "worktree": {
+    "baseRef": "fresh"
+  },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh",
     "padding": 0
   },
   "enabledPlugins": {
-    "feature-dev@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": false,
-    "typescript-lsp@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": false,
-    "skill-creator@claude-plugins-official": false
+    "typescript-lsp@claude-plugins-official": true
   },
   "viewMode": "verbose",
   "sandbox": {
@@ -50,10 +49,12 @@
   "effortLevel": "high",
   "tui": "fullscreen",
   "showThinkingSummaries": true,
+  "skipWorkflowUsageWarning": true,
   "theme": "auto",
   "verbose": true,
+  "preferredNotifChannel": "iterm2",
   "teammateMode": "auto",
+  "inputNeededNotifEnabled": false,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "skipWorkflowUsageWarning": true
+  "voiceEnabled": true
 }
