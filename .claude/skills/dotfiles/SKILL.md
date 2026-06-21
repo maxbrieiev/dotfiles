@@ -1,10 +1,10 @@
 ---
 name: dotfiles
 description: >-
-  Manage the shared zsh + Claude Code dotfiles repo at /Users/Shared/dotfiles (this is a
-  project skill living in that repo). Use when adding a CLI tool's shell init ("I installed
-  deno/nvm/bun/rust"), re-adding optional shell add-ons or ls colors, promoting a new
-  powerlevel10k prompt config, bumping the p10k submodule, or otherwise changing the shared config.
+  Maintain the shared zsh + Claude Code dotfiles repo at /Users/Shared/dotfiles (a project
+  skill living in that repo). Use when changing the shared config from inside the repo: adding
+  a CLI tool's shell init ("I installed deno/bun/rust"), promoting a new powerlevel10k prompt,
+  bumping the p10k submodule, or linking the config into another account.
 ---
 
 # dotfiles — shared shell + Claude Code config
@@ -48,24 +48,21 @@ Key facts:
 
 ## Procedure: add a CLI tool's shell init (e.g. "I installed deno")
 
-1. Look up the canonical guarded snippet in [reference.md](reference.md).
+1. Look up the canonical guarded snippet in [reference.md](reference.md). If the tool isn't in that
+   catalog, write a minimal guarded, `$HOME`-relative snippet and **add it to reference.md** — the catalog
+   is meant to grow as tools are installed.
 2. Decide the file from the decision tree above (most runtimes → a guarded block in `zsh/.zshrc`'s
    `>>> tool init <<<` section, since they add PATH *and* completions; pure PATH-only → `zsh/.zprofile`).
 3. Edit the file in `/Users/Shared/dotfiles`. Keep it guarded and `$HOME`-relative.
 4. `git -C /Users/Shared/dotfiles add -A && git -C /Users/Shared/dotfiles commit -m "zsh: add <tool>"`.
 5. Tell the user to open a new shell (or `exec zsh`) to pick it up.
 
-## Procedure: re-add an optional add-on or color tweak
-
-See [reference.md](reference.md) for zsh-autosuggestions, zsh-syntax-highlighting, and custom
-ls/completion colors (all were intentionally left out of the lean base). Same edit + commit flow.
-
 ## Procedure: promote a new prompt config
 
 Changing the prompt is a **user** action — they run `p10k configure` (or delete `~/.p10k.zsh`, which makes
 powerlevel10k auto-launch the wizard on the next shell). That writes a **real** `~/.p10k.zsh`, replacing the
 repo symlink. The skill's only job is to **promote** it back into the repo:
-`zsh ${CLAUDE_SKILL_DIR}/scripts/promote-p10k.sh` — moves it into `zsh/.p10k.zsh`, re-symlinks, and commits.
+`zsh /Users/Shared/dotfiles/.claude/skills/dotfiles/scripts/promote-p10k.sh` — moves it into `zsh/.p10k.zsh`, re-symlinks, and commits.
 (New accounts never touch the wizard — they inherit the committed `.p10k.zsh` via `link-account.sh`.)
 
 ## Notes

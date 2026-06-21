@@ -2,17 +2,12 @@
 # Read JSON input once
 input=$(cat)
 
-# Helper functions for common extractions
+# Extract the fields this line renders from the statusline JSON on stdin.
+# Many more are available (.version, .cost.*, .output_style.name, .agent.name — see the
+# Claude Code statusLine docs); add a getter here and append it below to surface one.
 get_model_name() { echo "$input" | jq -r '.model.display_name'; }
 get_current_dir() { echo "$input" | jq -r '.workspace.current_dir'; }
 get_project_dir() { echo "$input" | jq -r '.workspace.project_dir'; }
-get_version() { echo "$input" | jq -r '.version'; }
-get_cost() { echo "$input" | jq -r '.cost.total_cost_usd'; }
-get_duration() { echo "$input" | jq -r '.cost.total_duration_ms'; }
-get_lines_added() { echo "$input" | jq -r '.cost.total_lines_added'; }
-get_lines_removed() { echo "$input" | jq -r '.cost.total_lines_removed'; }
-get_output_style() { echo "$input" | jq -r '.output_style.name // "default"'; }
-get_agent_name() { echo "$input" | jq -r '.agent.name // ""'; }
 get_worktree() {
     local name=$(echo "$input" | jq -r '.workspace.git_worktree.name // empty')
     if [ -n "$name" ]; then

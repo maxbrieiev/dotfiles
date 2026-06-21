@@ -47,30 +47,3 @@ fi
 ```zsh
 [ -f "$HOME/.local/share/ask/ask.zsh" ] && source "$HOME/.local/share/ask/ask.zsh"
 ```
-
-## Optional shell add-ons (left out of the lean base — re-add if wanted)
-
-Install once into the shared repo, then source. Both are gitignored like powerlevel10k if you want them
-untracked, or `git add` them to vendor — your call (gitignore + bootstrap-clone keeps the repo clean).
-
-```zsh
-# git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions     /Users/Shared/dotfiles/zsh/zsh-autosuggestions
-# git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting /Users/Shared/dotfiles/zsh/zsh-syntax-highlighting
-```
-In `zsh/.zshrc` (syntax-highlighting MUST be sourced last):
-```zsh
-source "$ZSH_SHARED/zsh-autosuggestions/zsh-autosuggestions.zsh"
-source "$ZSH_SHARED/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-```
-
-## Color tweaks (only if defaults look off)
-
-```zsh
-# BSD ls (macOS). Bold ANSI adapts to light/dark terminals.
-export LSCOLORS="ExFxCxDxBxegedabagacad"
-# GNU ls / tree / completion menus:
-export LS_COLORS="di=1;34:ln=1;35:so=1;32:pi=1;33:ex=1;31:bd=1;33:cd=1;33:su=1;31:sg=1;31:tw=1;34:ow=1;34"
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
-# Dim autosuggestion color (if you re-added zsh-autosuggestions):
-# ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
-```

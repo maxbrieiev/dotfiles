@@ -40,7 +40,7 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
 > project config. Only the skill lives under `.claude/`, so opening Claude here exposes the skill and nothing else.
 
 ## Everyday maintenance (run `claude` inside this repo)
-- **Add a tool's shell init / re-add an add-on / change config:** invoke the **`dotfiles`** skill — it knows
+- **Add a tool's shell init / change config:** invoke the **`dotfiles`** skill — it knows
   the where-does-it-go rules and does the edit + commit.
 - **Add another account on this Mac:** `zsh .claude/skills/dotfiles/scripts/link-account.sh`.
 - **Update powerlevel10k:** `git -C zsh/powerlevel10k pull origin master`, then commit the submodule pointer.

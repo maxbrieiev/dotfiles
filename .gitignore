@@ -1,3 +1,2 @@
-# One-time reference stashes and pre-migration backups
-*.old-reference
+# Backups link-account.sh makes before replacing a real file with a symlink
 *.pre-migration.bak
