@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Single source of truth for **shell (zsh) + Claude Code config** on one Mac, shared across multiple
 macOS user accounts. It lives at **`/Users/Shared/dotfiles`** (a path every account can read), **not** in
-any `~`. `max` owns and commits it; each account symlinks the tracked files into its own `$HOME`. There is
+any `~`. It's **group-owned by the `dotfiles` group** with an inherited ACL, so every member account edits
+and commits it as an equal; each account symlinks the tracked files into its own `$HOME`. There is
 no build, no test suite, and no application — "working in this repo" means editing config and committing.
 
 Two files hold the deep background; read them before any non-trivial change:
@@ -20,6 +21,11 @@ Two files hold the deep background; read them before any non-trivial change:
   (`zsh/*` → `$HOME`, `claude/*` → `~/.claude`). Editing a tracked file changes it live for every account
   the next time that file is sourced. **Commit after every change** — an uncommitted edit isn't really
   "shared." You may be invoked from another cwd, so use `git -C /Users/Shared/dotfiles …`.
+- **Shared-write, not single-owner.** The repo is group-owned by the **`dotfiles`** group with an inherited
+  ACL, so any member account creates group-writable files and commits as an equal. A new machine runs
+  `scripts/enable-shared-writes.sh` once (creates the group; applies group ownership + ACL +
+  `core.sharedRepository`); each account runs `link-account.sh`, which registers the repo as a git
+  `safe.directory` (clears git's cross-owner "dubious ownership" guard). Don't reintroduce `max`-only ownership.
 - **Shared-safe means guarded + `$HOME`-relative.** A tool may be absent on a given account, so every init
   line must no-op when missing (`[[ -s "$HOME/.foo/env" ]] && source "$HOME/.foo/env"`). Never hardcode
   `/Users/max` — always `$HOME`.

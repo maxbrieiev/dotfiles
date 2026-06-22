@@ -13,8 +13,8 @@ This Mac shares one source-of-truth config between multiple macOS user accounts.
 **setup/bootstrap lives in the repo README**; this skill is for changes you make while Claude Code is
 already running inside the repo.)
 
-- **Source of truth:** `/Users/Shared/dotfiles` — a **git repo**, owned by `max`, mode `755`
-  (every account reads; only `max` edits/commits).
+- **Source of truth:** `/Users/Shared/dotfiles` — a **git repo** group-owned by the **`dotfiles`** group
+  with an inherited ACL (every member account reads, edits, and commits as an equal; non-members read-only).
 - **This is a project skill** (`.claude/skills/dotfiles/`): it loads whenever `claude` runs inside this repo.
 - **Config is deployed via symlinks** into each account by `scripts/link-account.sh` (zsh files → `$HOME`,
   `settings.json`/`statusline.sh` → `~/.claude`). The skill itself is NOT symlinked.
@@ -66,8 +66,17 @@ repo symlink. The skill's only job is to **promote** it back into the repo:
 (New accounts never touch the wizard — they inherit the committed `.p10k.zsh` via `link-account.sh`.)
 
 ## Notes
-- `scripts/link-account.sh` (re)creates this account's symlinks + inits the p10k submodule. It's a setup
-  step — see the repo **README** for first-time machine bootstrap.
+- `scripts/link-account.sh` (re)creates this account's symlinks + inits the p10k submodule, and registers
+  the repo as a git `safe.directory` for this account. It's a setup step — see the repo **README** for
+  first-time machine bootstrap.
+- **Shared write access:** the repo is writable by every account in the **`dotfiles`** group.
+  `scripts/enable-shared-writes.sh` (run once per machine, as admin) creates the group and applies group
+  ownership + an inherited ACL + `core.sharedRepository=group`. Add a new collaborator with
+  `sudo dseditgroup -o edit -a <user> -t user dotfiles`, then have them log out/in (group membership
+  refreshes on login) and run `link-account.sh`. **Trust model:** every group member can edit these
+  sudo-run scripts, so only add admins you already trust with root. **Concurrency:** the accounts share one
+  working tree + index — avoid simultaneous git operations; a leftover `.git/index.lock` from an
+  interrupted command is safe to delete when no git process is running.
 - powerlevel10k is a git **submodule** (pinned commit). Update with:
   `git -C /Users/Shared/dotfiles/zsh/powerlevel10k pull origin master` then
   `git -C /Users/Shared/dotfiles add zsh/powerlevel10k && git -C /Users/Shared/dotfiles commit -m "p10k: bump"`.
