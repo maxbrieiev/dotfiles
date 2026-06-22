@@ -21,7 +21,9 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
 4. Ask it to set up the account (or run directly):
    `zsh .claude/skills/dotfiles/scripts/link-account.sh` — symlinks the config into `$HOME` + `~/.claude`
    and inits the p10k submodule.
-5. **Install Homebrew**, then `brew install jq` and the **MesloLGS NF** font. *(User steps — preexisting deps.)*
+5. **Install Homebrew**, then `brew install jq`. Install the **MesloLGS NF** font once into
+   `/Library/Fonts` (system-wide → every account, including future ones; `admin` can write it without
+   `sudo`), then select it in each account's terminal profile. *(User steps — preexisting deps.)*
 6. Open a new terminal. The prompt **inherits** the committed `.p10k.zsh` automatically — no wizard needed.
    (Only to *change* the prompt do you run `p10k configure`; powerlevel10k also auto-launches it if
    `~/.p10k.zsh` is ever missing.)
