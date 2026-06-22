@@ -8,8 +8,9 @@ fi
 
 ZSH_SHARED="/Users/Shared/dotfiles/zsh"
 
-# Completion system
-autoload -Uz compinit && compinit
+# Completion system (-u: trust fpath dirs flagged "insecure" — here, the
+# Homebrew completion dirs owned by `max` — instead of prompting each shell)
+autoload -Uz compinit && compinit -u
 
 # Prompt theme
 source "$ZSH_SHARED/powerlevel10k/powerlevel10k.zsh-theme"
