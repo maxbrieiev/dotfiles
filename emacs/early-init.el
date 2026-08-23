@@ -10,6 +10,10 @@
 (push '(vertical-scroll-bars) default-frame-alist)
 (push '(width . 120) default-frame-alist)
 (push '(height . 40) default-frame-alist)
+;; Font for every frame (editor and the ghostel terminal alike). MesloLGS NF is
+;; the powerlevel10k Nerd Font, installed system-wide (see README), so the zsh
+;; prompt renders inside Emacs too.
+(push '(font . "MesloLGS NF-13") default-frame-alist)
 (setq frame-inhibit-implied-resize t)
 (setq inhibit-startup-screen t)
 
