@@ -1,6 +1,6 @@
 # dotfiles
 
-Single source of truth for **shell + Claude Code config** on this Mac, shared across macOS user accounts.
+Single source of truth for **shell + Emacs + Claude Code config** on this Mac, shared across macOS user accounts.
 
 ## Where it lives — the shared directory, not a home directory
 Clone this repo into **`/Users/Shared/dotfiles`**, *not* into any user's `~`. `/Users/Shared` is readable
@@ -29,6 +29,12 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
 6. **Install Homebrew**, then `brew install jq`. Install the **MesloLGS NF** font once into
    `/Library/Fonts` (system-wide → every account, including future ones; `admin` can write it without
    `sudo`), then select it in each account's terminal profile. *(User steps — preexisting deps.)*
+   **Emacs** (the main editor; Claude Code runs inside it via claude-code-ide.el + a ghostel terminal):
+   `brew trust d12frosted/emacs-plus && brew tap d12frosted/emacs-plus && brew install --cask emacs-plus-app`
+   — the *cask* (pre-built Emacs.app, links `emacs`/`emacsclient` into `/opt/homebrew/bin`), not the
+   formula, which drags in a fragile libgccjit source build. First launch self-installs every package
+   (MELPA + the ghostel native module); expect it to take a minute. Run `/status` in a Claude session
+   started with `C-c c` — it should report Emacs as the connected IDE.
 7. Open a new terminal. The prompt **inherits** the committed `.p10k.zsh` automatically — no wizard needed.
    (Only to *change* the prompt do you run `p10k configure`; powerlevel10k also auto-launches it if
    `~/.p10k.zsh` is ever missing.)
@@ -41,6 +47,7 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
 | `zsh/.p10k.zsh` | powerlevel10k prompt config |
 | `zsh/powerlevel10k/` | powerlevel10k theme — git **submodule** (pinned commit) |
 | `claude/settings.json`, `claude/statusline.sh` | user-level Claude config — symlink sources for `~/.claude` |
+| `emacs/early-init.el`, `emacs/init.el` | Emacs config — symlink sources for `~/.emacs.d` (the dir itself stays per-account: `elpa/`, `eln-cache/`, `custom.el` are generated) |
 | `.claude/skills/dotfiles/` | the **`dotfiles`** project skill — maintenance helper |
 
 > `claude/` is **no-dot** on purpose: its `settings.json` is *user* config (symlinked to `~/.claude`), not

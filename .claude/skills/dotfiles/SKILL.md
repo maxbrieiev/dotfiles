@@ -17,9 +17,10 @@ already running inside the repo.)
   with an inherited ACL (every member account reads, edits, and commits as an equal; non-members read-only).
 - **This is a project skill** (`.claude/skills/dotfiles/`): it loads whenever `claude` runs inside this repo.
 - **Config is deployed via symlinks** into each account by `scripts/link-account.sh` (zsh files → `$HOME`,
-  `settings.json`/`statusline.sh` → `~/.claude`). The skill itself is NOT symlinked.
+  `settings.json`/`statusline.sh` → `~/.claude`, `emacs/*.el` → `~/.emacs.d`). The skill itself is NOT symlinked.
 - **Layout:** `zsh/` (`.zprofile`, `.zshrc`, `.p10k.zsh`, `powerlevel10k/` submodule),
-  `claude/` (`settings.json`, `statusline.sh`), `.claude/skills/dotfiles/` (this skill).
+  `claude/` (`settings.json`, `statusline.sh`), `emacs/` (`early-init.el`, `init.el`),
+  `.claude/skills/dotfiles/` (this skill).
 
 When you change anything here, **commit it**: `git -C /Users/Shared/dotfiles add -A && git -C /Users/Shared/dotfiles commit -m "..."`.
 
@@ -42,6 +43,7 @@ Key facts:
 | Interactive-only (alias, function, keybinding, prompt/plugin) | `zsh/.zshrc` | inside the `>>> tool init <<<` block for tool inits |
 | Env/PATH a `ssh host cmd` / cron job needs | create `zsh/.zshenv` + add a symlink | only then; keep it tiny, no output |
 | Account-specific (work git email, work-only tool) | `~/.zshrc.local` (real file, NOT shared) | not in this repo |
+| Emacs config | `emacs/` | symlinked into `~/.emacs.d`; see bootstrap notes at the top of `init.el` |
 
 **Always guard** so the shared config never errors when a tool is absent on an account:
 `[[ -s "$HOME/.foo/env" ]] && source "$HOME/.foo/env"` — and use `$HOME`, never `/Users/max`.

@@ -33,6 +33,12 @@ mkdir -p "$HOME/.claude"
 link "$SHARED/claude/settings.json" "$HOME/.claude/settings.json"
 link "$SHARED/claude/statusline.sh" "$HOME/.claude/statusline.sh"
 
+# Emacs. ~/.emacs.d itself stays a real per-account dir (elpa/, eln-cache/, custom.el
+# are machine-generated and never shared); only the two init files are linked.
+mkdir -p "$HOME/.emacs.d"
+link "$SHARED/emacs/early-init.el" "$HOME/.emacs.d/early-init.el"
+link "$SHARED/emacs/init.el"       "$HOME/.emacs.d/init.el"
+
 # Shared-write git setup, so THIS account can commit to the shared repo.
 # Trust the repo despite cross-account ownership (git's "dubious ownership" guard).
 # Submodules are SEPARATE repos with their own ownership check, so register each

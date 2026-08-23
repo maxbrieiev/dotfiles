@@ -26,9 +26,9 @@
       "WebFetch(domain:vitest.dev)",
       "WebFetch(domain:html.spec.whatwg.org)"
     ],
-    "defaultMode": "default"
+    "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "claude-fable-5[1m]",
   "worktree": {
     "baseRef": "fresh"
   },
@@ -52,7 +52,7 @@
   "skipWorkflowUsageWarning": true,
   "theme": "auto",
   "verbose": true,
-  "preferredNotifChannel": "iterm2",
+  "preferredNotifChannel": "terminal_bell",
   "teammateMode": "auto",
   "inputNeededNotifEnabled": false,
   "skipAutoPermissionPrompt": true,

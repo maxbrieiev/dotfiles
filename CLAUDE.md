@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Single source of truth for **shell (zsh) + Claude Code config** on one Mac, shared across multiple
+Single source of truth for **shell (zsh) + Emacs + Claude Code config** on one Mac, shared across multiple
 macOS user accounts. It lives at **`/Users/Shared/dotfiles`** (a path every account can read), **not** in
 any `~`. It's **group-owned by the `dotfiles` group** with an inherited ACL, so every member account edits
 and commits it as an equal; each account symlinks the tracked files into its own `$HOME`. There is
@@ -18,7 +18,7 @@ Two files hold the deep background; read them before any non-trivial change:
 ## Invariants (these are what make the repo correct)
 
 - **Edit here, deploy by symlink.** `link-account.sh` symlinks tracked files into each account
-  (`zsh/*` → `$HOME`, `claude/*` → `~/.claude`). Editing a tracked file changes it live for every account
+  (`zsh/*` → `$HOME`, `claude/*` → `~/.claude`, `emacs/*` → `~/.emacs.d`). Editing a tracked file changes it live for every account
   the next time that file is sourced. **Commit after every change** — an uncommitted edit isn't really
   "shared." You may be invoked from another cwd, so use `git -C /Users/Shared/dotfiles …`.
 - **Shared-write, not single-owner.** The repo is group-owned by the **`dotfiles`** group with an inherited
@@ -32,6 +32,9 @@ Two files hold the deep background; read them before any non-trivial change:
 - **`claude/` (no dot) ≠ `.claude/` (dot).** `claude/` is *user* Claude config (`settings.json`,
   `statusline.sh`) symlinked to `~/.claude`. `.claude/` holds the **`dotfiles` project skill** that loads
   when Claude Code runs inside this repo. The split is deliberate; don't move config between them.
+- **Emacs is the editor; Claude Code runs inside it** (claude-code-ide.el, ghostel terminal). Config lives
+  in `emacs/`, symlinked into `~/.emacs.d`. The bootstrap notes at the top of `emacs/init.el` were learned
+  on a pristine machine — keep them, and re-run the fresh-machine test there after touching the bootstrap.
 - **No secrets, ever.** Claude auth stays in the macOS Keychain; `~/.claude.json` and `~/.zsh_history` are
   per-account and never tracked here.
 
