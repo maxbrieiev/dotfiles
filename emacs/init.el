@@ -74,7 +74,9 @@
   :custom
   ;; Non-interactive on a pristine machine: fetch the prebuilt native module
   ;; instead of prompting (default is 'ask).
-  (ghostel-module-auto-install 'download))
+  (ghostel-module-auto-install 'download)
+  ;; No-break spaces are layout in a terminal, not text — don't underline them.
+  :hook (ghostel-mode . (lambda () (setq-local nobreak-char-display nil))))
 
 (use-package claude-code-ide
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
