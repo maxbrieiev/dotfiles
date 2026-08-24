@@ -63,6 +63,22 @@
   (vc-handled-backends '(Git))
 
   :config
+  ;; macOS keyboard: the "Dev Dvorak" layout defines a QWERTY command plane
+  ;; (⌘-shortcuts sit at QWERTY positions system-wide), but the NS port
+  ;; ignores that plane and derives super keys from the base Dvorak plane,
+  ;; so e.g. ⌘C arrives as s-j. Translate each super key through the
+  ;; layout's own base→⌘-plane table so ⌘ shortcuts land on the same
+  ;; physical keys as in every other app. The two strings are aligned
+  ;; pairs generated from DevDvorak.bundle's .keylayout (base plane vs
+  ;; command plane, plain then shifted).
+  (when (featurep 'ns)
+    (let ((dvorak "oeudi'qjkx;,.pfy&[{}=(#+`*)]@rg?clnh-tswzbv/OEUDI\"QJKX:<>PFY12346597%80^RG!CLNH_TSWZBV")
+          (qwerty "sdfhgzxcvbqweryt123465=97-80]ou[iplj'k;,/n.`SDFHGZXCVBQWERYT!@#$^%(&_*)}OU{IPLJ\"K:<?N>"))
+      (dotimes (i (length dvorak))
+        (define-key key-translation-map
+                    (vector (event-convert-list (list 'super (aref dvorak i))))
+                    (vector (event-convert-list (list 'super (aref qwerty i))))))))
+
   ;; Glyph fallback. Emacs picks fallback fonts itself, not via the macOS
   ;; cascade: MesloLGS NF lacks technical symbols like ⎘, and Emacs chose STIX
   ;; Two Math for them. (Emoji need nothing: Apple Color Emoji is picked anyway.)
