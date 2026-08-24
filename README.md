@@ -26,7 +26,8 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
    makes the repo group-owned + group-writable (inherited ACL), so every collaborating account edits and
    commits as an equal. Pass accounts as args (default: `max max-ounass`); a newly-added member must log
    out/in before its session has the group. Idempotent — re-run to add collaborators.
-6. **Install Homebrew**, then `brew install jq`. Install the **MesloLGS NF** font once into
+6. **Install Homebrew**, then `brew install jq ripgrep` (`jq` for the Claude statusline; `ripgrep` for
+   Emacs `consult-ripgrep`, bound to `M-s r`). Install the **MesloLGS NF** font once into
    `/Library/Fonts` (system-wide → every account, including future ones; `admin` can write it without
    `sudo`), then select it in each account's terminal profile. *(User steps — preexisting deps.)*
    **Emacs** (the main editor; Claude Code runs inside it via claude-code-ide.el + a ghostel terminal):
