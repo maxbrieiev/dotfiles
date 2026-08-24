@@ -51,6 +51,10 @@
 
   ;; Minibuffer & help.
   (enable-recursive-minibuffers t)
+  (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+  (read-extended-command-predicate #'command-completion-default-include-p)  ; M-x: hide inapplicable commands
+  (tab-always-indent 'complete)              ; TAB indents, then completes (corfu)
+  (text-mode-ispell-word-completion nil)     ; no dictionary words in completion
   (help-window-select t)
   (help-enable-variable-value-editing t)
   (debugger-stack-frame-as-list t)
@@ -71,7 +75,20 @@
   ;; Enable disabled-by-default commands.
   (put 'narrow-to-region 'disabled nil)
   (put 'narrow-to-page 'disabled nil)
-  (put 'help-fns-edit-variable 'disabled nil))
+  (put 'help-fns-edit-variable 'disabled nil)
+
+  ;; Keep the cursor out of the minibuffer prompt (pairs with
+  ;; `minibuffer-prompt-properties' above).
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
+  ;; Prompt indicator for `completing-read-multiple' (built into Emacs 31).
+  (when (< emacs-major-version 31)
+    (advice-add #'completing-read-multiple :filter-args
+                (lambda (args)
+                  (cons (format "[CRM%s] %s"
+                                (string-replace "[ \t]*" "" crm-separator)
+                                (car args))
+                        (cdr args))))))
 
 ;; Built-in features with their own settings.
 (use-package dired
@@ -122,6 +139,129 @@
 (use-package savehist     :custom (savehist-mode t))
 (use-package recentf      :custom (recentf-mode t))
 (use-package repeat       :custom (repeat-mode t))
+
+;; Completion stack: vertico (minibuffer UI) + orderless (matching) +
+;; marginalia (annotations) + consult (commands) + embark (actions) +
+;; corfu/cape (in-buffer completion).
+
+(use-package vertico
+  :ensure t
+  :custom
+  (vertico-count 12)
+  (vertico-cycle t)
+  (vertico-quick1 "nthueoa")  ; Dvorak home row
+  (vertico-quick2 "id")
+  :bind (:map vertico-map
+              ("M-q" . vertico-quick-insert)
+              ("C-q" . vertico-quick-exit))
+  :init (vertico-mode))
+
+;; Ido-like directory editing: RET descends, DEL deletes whole components,
+;; and typing ~/ or // anywhere in a path tidies the shadowed prefix.
+(use-package vertico-directory
+  :ensure nil  ; ships with vertico
+  :after vertico
+  :bind (:map vertico-map
+              ("RET"   . vertico-directory-enter)
+              ("DEL"   . vertico-directory-delete-char)
+              ("M-DEL" . vertico-directory-delete-word))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
+
+;; Space-separated patterns in any order. The default affix dispatchers
+;; replace the 2024 config's hand-written ones: suffix/prefix ! = not,
+;; = literal, ^ literal-prefix, ~ flex, , initialism, & annotation, % char-fold.
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))  ; basic = fallback for odd tables/TRAMP
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))  ; /u/l/b paths
+
+(use-package marginalia
+  :ensure t
+  :bind (:map minibuffer-local-map ("M-A" . marginalia-cycle))
+  :init (marginalia-mode))
+
+(use-package consult
+  :ensure t
+  :bind (([remap switch-to-buffer] . consult-buffer)
+         ([remap switch-to-buffer-other-window] . consult-buffer-other-window)
+         ([remap project-switch-to-buffer] . consult-project-buffer)
+         ([remap bookmark-jump] . consult-bookmark)
+         ([remap goto-line] . consult-goto-line)  ; the 2024 remap had a `go-to-line' typo
+         ([remap yank-pop] . consult-yank-pop)
+         ([remap imenu] . consult-imenu)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-thing-at-point)
+         ("M-s r" . consult-ripgrep)
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)
+         ("C-M-#" . consult-register)
+         ("C-c h" . consult-history)
+         ("C-c m" . consult-mode-command))
+  :custom
+  (consult-narrow-key "C-+")
+  ;; Select xref results in the minibuffer with preview.
+  (xref-show-xrefs-function #'consult-xref)
+  (xref-show-definitions-function #'consult-xref)
+  :config
+  ;; Use orderless to compile patterns for external grep/find/ripgrep, so
+  ;; async searches match like everything else and need no -- splitting.
+  (defun my/consult--orderless-regexp-compiler (input type &rest _config)
+    (setq input (orderless-pattern-compiler input))
+    (cons (mapcar (lambda (r) (consult--convert-regexp r type)) input)
+          (lambda (str) (orderless--highlight input t str))))
+  (setq consult--regexp-compiler #'my/consult--orderless-regexp-compiler)
+  (setq consult-async-split-style nil)
+
+  ;; Register preview via consult.
+  (setq register-preview-delay 0
+        register-preview-function #'consult-register-format)
+  (advice-add #'register-preview :override #'consult-register-window)
+
+  ;; consult-line with the symbol at point on M-s L; M-n fetches it on M-s l.
+  (consult-customize consult-line
+                     :add-history (seq-some #'thing-at-point '(region symbol)))
+  (defalias 'consult-line-thing-at-point 'consult-line)
+  (consult-customize consult-line-thing-at-point
+                     :initial (thing-at-point 'symbol)))
+
+(use-package embark
+  :ensure t
+  ;; C-; instead of the 2024 M-., which is reserved for xref-find-definitions.
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim)
+         ("C-h B" . embark-bindings))
+  :custom (prefix-help-command #'embark-prefix-help-command))
+
+(use-package embark-consult
+  :ensure t
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package corfu
+  :ensure t
+  :custom
+  (corfu-auto t)
+  (corfu-cycle t)
+  (corfu-quick1 "nthueoa")
+  (corfu-quick2 "id")
+  :bind (:map corfu-map
+              ("M-q" . corfu-quick-complete)
+              ("C-q" . corfu-quick-exit))
+  :init
+  (global-corfu-mode)
+  (corfu-history-mode)    ; sort by recency (persisted via savehist)
+  (corfu-popupinfo-mode)  ; docs popup next to the candidate (ex corfu-doc)
+  :config
+  (add-to-list 'savehist-additional-variables 'corfu-history))
+
+;; Extra completion-at-point backends (also under C-c p on demand).
+(use-package cape
+  :ensure t
+  :bind ("C-c p" . cape-prefix-map)
+  :init
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file))
 
 ;; Theme: modus tinted (warm paper / dark), following the macOS appearance via
 ;; the emacs-plus `ns-system-appearance' hook.
