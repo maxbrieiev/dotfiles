@@ -325,7 +325,37 @@
   ;; instead of prompting (default is 'ask).
   (ghostel-module-auto-install 'download)
   ;; No-break spaces are layout in a terminal, not text — don't underline them.
-  :hook (ghostel-mode . (lambda () (setq-local nobreak-char-display nil))))
+  :hook (ghostel-mode . (lambda () (setq-local nobreak-char-display nil)))
+  :config
+  ;; Trackpad scrolling in fullscreen TUIs (Claude Code, vim, less…). On the
+  ;; alternate screen ghostel forwards every wheel event to the program as
+  ;; one full button-4/5 tick and ignores the event's pixel delta; a macOS
+  ;; trackpad emits dozens of small-delta events per gesture, so a light
+  ;; nudge scrolled pages. Do what Ghostty itself does: accumulate the
+  ;; pixel travel and emit one tick per line height. Off the alternate
+  ;; screen the original per-event path is kept (it falls through to
+  ;; `pixel-scroll-precision-mode', which already scrolls by pixels).
+  (defvar-local my/ghostel-wheel-accum 0.0
+    "Signed pixels of wheel travel not yet forwarded as a tick (up > 0).")
+  (defun my/ghostel-forward-scroll-by-lines (orig event button)
+    "Around `ghostel--forward-scroll-event': one BUTTON tick per line of travel."
+    (let ((delta (and (consp event) (nth 4 event) (cdr (nth 4 event)))))
+      (if (not (and delta (ghostel-alt-screen-p)))
+          (funcall orig event button)
+        (let ((sign (if (eq button 4) 1 -1))
+              (line (float (default-line-height)))
+              (sent t))
+          ;; A direction change drops leftover travel from the old one.
+          (when (< (* my/ghostel-wheel-accum sign) 0)
+            (setq my/ghostel-wheel-accum 0.0))
+          (setq my/ghostel-wheel-accum (+ my/ghostel-wheel-accum (* sign (abs delta))))
+          (while (and sent (>= (abs my/ghostel-wheel-accum) line))
+            (setq sent (funcall orig event button))
+            (setq my/ghostel-wheel-accum (- my/ghostel-wheel-accum (* sign line))))
+          ;; nil only if the program refused a tick: then ghostel re-dispatches
+          ;; the event to the normal Emacs scroll handler.
+          sent))))
+  (advice-add 'ghostel--forward-scroll-event :around #'my/ghostel-forward-scroll-by-lines))
 
 (use-package claude-code-ide
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
