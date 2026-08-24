@@ -31,7 +31,10 @@ unsetopt BEEP LIST_BEEP HIST_BEEP
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 
 # >>> tool init (managed by the `dotfiles` skill — all guarded) >>>
-# (empty — add a tool's guarded init here, e.g. via: /dotfiles)
+# nvm (Node) — per-account install in $HOME/.nvm; no-op where absent
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 # <<< tool init <<<
 
 # Per-account overrides (NOT shared): work git email, account-only tools, etc.
