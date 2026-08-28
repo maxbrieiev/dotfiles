@@ -291,6 +291,14 @@ Follows symlinks."
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file))
 
+;; Git porcelain. Magit sets its own global keys: C-x g status,
+;; C-x M-g dispatch (any magit command), C-c M-g file dispatch.
+(use-package magit
+  :ensure t
+  :custom
+  (magit-diff-refine-hunk t)
+  (magit-save-repository-buffers 'dontask))
+
 ;; Theme: modus tinted (warm paper / dark), following the macOS appearance via
 ;; the emacs-plus `ns-system-appearance' hook.
 (use-package modus-themes
