@@ -61,6 +61,7 @@
 
   ;; Version control: Git only (skips probing for RCS/SVN/Hg/... per file).
   (vc-handled-backends '(Git))
+  (vc-follow-symlinks t)  ; visit the real file behind symlinked files, don't ask
 
   :config
   ;; macOS keyboard: the "Dev Dvorak" layout defines a QWERTY command plane
@@ -88,6 +89,14 @@
   ;; Unbind suspend-frame (useless in a GUI) and transpose-chars.
   (keymap-unset global-map "C-z" t)
   (keymap-unset global-map "C-t" t)
+
+  ;; Emacs has no built-in command to visit the init file.
+  (defun my/visit-init-file ()
+    "Visit the init file Emacs loaded at startup (`user-init-file').
+Follows symlinks."
+    (interactive)
+    (find-file (file-truename user-init-file)))
+  (keymap-global-set "C-c i" #'my/visit-init-file)
 
   ;; Enable disabled-by-default commands.
   (put 'narrow-to-region 'disabled nil)
