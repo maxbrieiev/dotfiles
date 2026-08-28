@@ -262,6 +262,8 @@ Follows symlinks."
 
 (use-package embark-consult
   :ensure t
+  :after (embark consult)
+  :demand t  ; a :hook alone defers it forever, and embark warns it's missing
   :hook (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package corfu
