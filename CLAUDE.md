@@ -18,8 +18,11 @@ Two files hold the deep background; read them before any non-trivial change:
 ## Invariants (these are what make the repo correct)
 
 - **Edit here, deploy by symlink.** `link-account.sh` symlinks tracked files into each account
-  (`zsh/*` → `$HOME`, `claude/*` → `~/.claude`, `emacs/*` → `~/.emacs.d`). Editing a tracked file changes it live for every account
-  the next time that file is sourced. **Commit after every change** — an uncommitted edit isn't really
+  (`zsh/*` → `$HOME`, `claude/statusline.sh` → `~/.claude`, `emacs/*` → `~/.emacs.d`). Editing a tracked file changes it live for every account
+  the next time that file is sourced. **Exception: `claude/settings.json` is a baseline that `link-account.sh`
+  deep-merges into the account's real `~/.claude/settings.json`** (Claude Code writes its own UI toggles
+  there, so a symlink would leak per-account churn into the repo). Keep only cross-account keys in the
+  baseline; re-run `link-account.sh` after editing it. **Commit after every change** — an uncommitted edit isn't really
   "shared." You may be invoked from another cwd, so use `git -C /Users/Shared/dotfiles …`.
 - **Shared-write, not single-owner.** The repo is group-owned by the **`dotfiles`** group with an inherited
   ACL, so any member account creates group-writable files and commits as an equal. A new machine runs
@@ -30,7 +33,7 @@ Two files hold the deep background; read them before any non-trivial change:
   line must no-op when missing (`[[ -s "$HOME/.foo/env" ]] && source "$HOME/.foo/env"`). Never hardcode
   `/Users/max` — always `$HOME`.
 - **`claude/` (no dot) ≠ `.claude/` (dot).** `claude/` is *user* Claude config (`settings.json`,
-  `statusline.sh`) symlinked to `~/.claude`. `.claude/` holds the **`dotfiles` project skill** that loads
+  `statusline.sh`) deployed to `~/.claude`. `.claude/` holds the **`dotfiles` project skill** that loads
   when Claude Code runs inside this repo. The split is deliberate; don't move config between them.
 - **Emacs is the editor; Claude Code runs inside it** (claude-code-ide.el, ghostel terminal). Config lives
   in `emacs/`, symlinked into `~/.emacs.d`. The bootstrap notes at the top of `emacs/init.el` were learned

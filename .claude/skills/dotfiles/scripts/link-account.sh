@@ -28,9 +28,31 @@ link "$SHARED/zsh/.zshrc"    "$HOME/.zshrc"
 # ~/.p10k.zsh only once it exists in the repo (created by `p10k configure`, then promoted).
 [[ -e "$SHARED/zsh/.p10k.zsh" ]] && link "$SHARED/zsh/.p10k.zsh" "$HOME/.p10k.zsh"
 
-# Claude Code user-level config
+# Claude Code user-level config.
+# settings.json is MERGED, not symlinked: Claude Code writes its own UI state (/model, /config
+# toggles, "always allow" clicks) into ~/.claude/settings.json, and a symlink would push that
+# per-account churn straight into the repo. The repo file is the shared BASELINE; its keys win,
+# every other key already in the account's file is kept. Re-run this script after editing the
+# baseline — it is no longer live via symlink.
 mkdir -p "$HOME/.claude"
-link "$SHARED/claude/settings.json" "$HOME/.claude/settings.json"
+merge_settings() {  # merge_settings <baseline> <target>
+  local base="$1" dst="$2" seed
+  if [[ -L "$dst" ]]; then            # migrate a symlinked account: keep whatever it resolved to
+    seed="$(cat "$dst" 2>/dev/null || echo '{}')"
+    rm -f "$dst"
+    printf '%s\n' "$seed" > "$dst"
+    echo "migrated:  $dst symlink -> real file"
+  fi
+  if ! command -v jq >/dev/null; then
+    [[ -e "$dst" ]] || cp "$base" "$dst"
+    echo "NOTE: jq not found — $dst not merged with $base (brew install jq, then re-run)."
+    return
+  fi
+  [[ -s "$dst" ]] || printf '{}\n' > "$dst"
+  jq -s '.[0] * .[1]' "$dst" "$base" > "$dst.tmp" && mv "$dst.tmp" "$dst"
+  echo "merged:    $base -> $dst"
+}
+merge_settings "$SHARED/claude/settings.json" "$HOME/.claude/settings.json"
 link "$SHARED/claude/statusline.sh" "$HOME/.claude/statusline.sh"
 
 # Emacs. ~/.emacs.d itself stays a real per-account dir (elpa/, eln-cache/, custom.el

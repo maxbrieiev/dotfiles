@@ -19,14 +19,15 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
    `git clone --recursive <repo-url> /Users/Shared/dotfiles`   ← shared dir, **not** `~`.
 3. `cd /Users/Shared/dotfiles && claude` — the `dotfiles` skill loads automatically.
 4. Ask it to set up the account (or run directly):
-   `zsh .claude/skills/dotfiles/scripts/link-account.sh` — symlinks the config into `$HOME` + `~/.claude`,
-   inits the p10k submodule, and registers the repo as a git `safe.directory` for this account.
+   `zsh .claude/skills/dotfiles/scripts/link-account.sh` — symlinks the config into `$HOME` + `~/.claude`
+   (merges the Claude `settings.json` baseline into the account's own file — needs `jq`), inits the p10k
+   submodule, and registers the repo as a git `safe.directory` for this account.
 5. **Enable shared writes (once per machine, by an admin):**
    `sudo zsh .claude/skills/dotfiles/scripts/enable-shared-writes.sh` — creates the `dotfiles` group and
    makes the repo group-owned + group-writable (inherited ACL), so every collaborating account edits and
    commits as an equal. Pass accounts as args (default: `max max-ounass`); a newly-added member must log
    out/in before its session has the group. Idempotent — re-run to add collaborators.
-6. **Install Homebrew**, then `brew install jq ripgrep` (`jq` for the Claude statusline; `ripgrep` for
+6. **Install Homebrew**, then `brew install jq ripgrep` (`jq` for the Claude statusline and settings merge; `ripgrep` for
    Emacs `consult-ripgrep`, bound to `M-s r`). Install the **MesloLGS NF** font once into
    `/Library/Fonts` (system-wide → every account, including future ones; `admin` can write it without
    `sudo`), then select it in each account's terminal profile. *(User steps — preexisting deps.)*
@@ -47,11 +48,12 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
 | `zsh/.zshrc` | interactive shell — powerlevel10k, `compinit`, history, `CLICOLOR` |
 | `zsh/.p10k.zsh` | powerlevel10k prompt config |
 | `zsh/powerlevel10k/` | powerlevel10k theme — git **submodule** (pinned commit) |
-| `claude/settings.json`, `claude/statusline.sh` | user-level Claude config — symlink sources for `~/.claude` |
+| `claude/settings.json` | shared **baseline** of user-level Claude settings — merged (via `jq`) into `~/.claude/settings.json`, which stays a real per-account file because Claude Code writes its own toggles there |
+| `claude/statusline.sh` | Claude status line — symlink source for `~/.claude` |
 | `emacs/early-init.el`, `emacs/init.el` | Emacs config — symlink sources for `~/.emacs.d` (the dir itself stays per-account: `elpa/`, `eln-cache/`, `custom.el` are generated) |
 | `.claude/skills/dotfiles/` | the **`dotfiles`** project skill — maintenance helper |
 
-> `claude/` is **no-dot** on purpose: its `settings.json` is *user* config (symlinked to `~/.claude`), not
+> `claude/` is **no-dot** on purpose: its `settings.json` is *user* config (merged into `~/.claude`), not
 > project config. Only the skill lives under `.claude/`, so opening Claude here exposes the skill and nothing else.
 
 ## Everyday maintenance (run `claude` inside this repo)

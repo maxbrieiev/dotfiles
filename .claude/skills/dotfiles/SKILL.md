@@ -17,7 +17,16 @@ already running inside the repo.)
   with an inherited ACL (every member account reads, edits, and commits as an equal; non-members read-only).
 - **This is a project skill** (`.claude/skills/dotfiles/`): it loads whenever `claude` runs inside this repo.
 - **Config is deployed via symlinks** into each account by `scripts/link-account.sh` (zsh files → `$HOME`,
-  `settings.json`/`statusline.sh` → `~/.claude`, `emacs/*.el` → `~/.emacs.d`). The skill itself is NOT symlinked.
+  `statusline.sh` → `~/.claude`, `emacs/*.el` → `~/.emacs.d`). The skill itself is NOT symlinked.
+- **Exception — `claude/settings.json` is merged, not symlinked.** Claude Code rewrites
+  `~/.claude/settings.json` itself (`/model`, `/config` toggles, "always allow" clicks), so a symlink would
+  turn that per-account churn into repo noise. The repo file is the shared **baseline** (`env`,
+  `permissions`, `statusLine`, `worktree`, `sandbox`, `enabledPlugins`, `includeCoAuthoredBy`);
+  `link-account.sh` deep-merges it into the account's real file with `jq` (baseline keys win, all other
+  keys kept). Per-account preferences (`model`, `theme`, `effortLevel`, notification/voice toggles, …) live
+  only in `~/.claude/settings.json` and are never committed. After editing the baseline, re-run
+  `link-account.sh` on each account — it is not live. To share a permission the UI added on one account,
+  copy it into the baseline's `permissions.allow` by hand.
 - **Layout:** `zsh/` (`.zprofile`, `.zshrc`, `.p10k.zsh`, `powerlevel10k/` submodule),
   `claude/` (`settings.json`, `statusline.sh`), `emacs/` (`early-init.el`, `init.el`),
   `.claude/skills/dotfiles/` (this skill).
