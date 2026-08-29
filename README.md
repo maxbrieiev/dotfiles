@@ -37,7 +37,14 @@ the moment you open Claude Code in the clone — no pre-existing `~/.claude` set
    formula, which drags in a fragile libgccjit source build. First launch self-installs every package
    (MELPA + the ghostel native module); expect it to take a minute. Run `/status` in a Claude session
    started with `C-c c` — it should report Emacs as the connected IDE.
-7. Open a new terminal. The prompt **inherits** the committed `.p10k.zsh` automatically — no wizard needed.
+7. **Node, pnpm, TypeScript for the editor** (user steps): install [nvm](https://github.com/nvm-sh/nvm)
+   (its init is already in the shared `.zshrc`) and `nvm install node`; install pnpm with its standalone
+   script (`curl -fsSL https://get.pnpm.io/install.sh | sh -`) — its `pnpm setup` step replaces the
+   `~/.zshrc` symlink with a real file, so re-run `link-account.sh` afterwards (the shared `.zprofile`
+   already puts `~/Library/pnpm/bin` and the newest nvm node on PATH, which is what Emacs sees). Then
+   `pnpm add -g typescript` (7+; Emacs runs `tsc --lsp` as the TypeScript language server — global on
+   purpose, vp/oxc projects carry no `typescript` dependency). Restart Emacs after installing.
+8. Open a new terminal. The prompt **inherits** the committed `.p10k.zsh` automatically — no wizard needed.
    (Only to *change* the prompt do you run `p10k configure`; powerlevel10k also auto-launches it if
    `~/.p10k.zsh` is ever missing.)
 

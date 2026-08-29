@@ -17,6 +17,7 @@
 
 ;; Core editor settings (built-in, no package behind them).
 (use-package emacs
+  :ensure nil
   :custom
   ;; Files: no backup (~), auto-save (#file#), or lock (.#file) clutter.
   (make-backup-files nil)
@@ -116,18 +117,21 @@ Follows symlinks."
                                 (car args))
                         (cdr args))))))
 
-;; Built-in features with their own settings.
+;; Built-in features with their own settings (`:ensure nil' marks a built-in).
 (use-package dired
+  :ensure nil
   :custom
   (dired-kill-when-opening-new-dired-buffer t)
   (dired-listing-switches "-Alh"))  ; BSD ls: no --group-directories-first
 
 (use-package isearch
+  :ensure nil
   :custom
   (isearch-lazy-count t)
   (isearch-wrap-pause 'no))
 
 (use-package autorevert
+  :ensure nil
   :custom
   (global-auto-revert-mode t)
   (global-auto-revert-non-file-buffers t)  ; Dired too
@@ -135,6 +139,7 @@ Follows symlinks."
   (auto-revert-verbose nil))
 
 (use-package pixel-scroll
+  :ensure nil
   :custom
   (pixel-scroll-precision-mode t)  ; smooth trackpad scrolling
   (pixel-scroll-precision-interpolate-page t)
@@ -162,9 +167,9 @@ Follows symlinks."
   :bind (:map pixel-scroll-precision-mode-map
               ([remap scroll-up-command]   . my/pixel-scroll-page-down)
               ([remap scroll-down-command] . my/pixel-scroll-page-up)))
-(use-package savehist     :custom (savehist-mode t))
-(use-package recentf      :custom (recentf-mode t))
-(use-package repeat       :custom (repeat-mode t))
+(use-package savehist     :ensure nil :custom (savehist-mode t))
+(use-package recentf      :ensure nil :custom (recentf-mode t))
+(use-package repeat       :ensure nil :custom (repeat-mode t))
 
 ;; Completion stack: vertico (minibuffer UI) + orderless (matching) +
 ;; marginalia (annotations) + consult (commands) + embark (actions) +
@@ -223,6 +228,7 @@ Follows symlinks."
          ("M-#" . consult-register-load)
          ("M-'" . consult-register-store)
          ("C-M-#" . consult-register)
+         ("M-g f" . consult-flymake)
          ("C-c h" . consult-history)
          ("C-c m" . consult-mode-command))
   :custom
@@ -298,6 +304,92 @@ Follows symlinks."
   :custom
   (magit-diff-refine-hunk t)
   (magit-save-repository-buffers 'dontask))
+
+;; Language support: Emacs 31's built-in tree-sitter modes + eglot.
+;; `treesit-enabled-modes' is the switch: without it the `*-ts-mode-maybe'
+;; dispatchers fall back to a plain mode (or `fundamental-mode') when the
+;; grammar is missing. With it, the ts-mode runs and compiles its grammar on
+;; first use, non-interactively (same doctrine as the ghostel module: a fresh
+;; machine must start without prompts).
+(use-package treesit
+  :ensure nil
+  :custom
+  (treesit-enabled-modes '(typescript-ts-mode tsx-ts-mode))
+  (treesit-auto-install-grammar 'always)
+  (treesit-font-lock-level 4))
+
+(use-package typescript-ts-mode
+  :ensure nil
+  :mode ("\\.[mc]ts\\'" . typescript-ts-mode)
+  :custom (typescript-ts-mode-indent-offset 2))
+
+;; TypeScript's language server is the native (Go) compiler itself, `tsc --lsp',
+;; available since TypeScript 7. A vp/oxc project (elarion) type-checks with the
+;; same engine via tsgolint and deliberately carries no `typescript' dependency,
+;; so the server comes from a global `npm i -g typescript' — unless the project
+;; has its own tsc 7+, which then wins.
+(use-package eglot
+  :ensure nil
+  :hook ((typescript-ts-mode tsx-ts-mode) . eglot-ensure)
+  :custom
+  (eglot-autoshutdown t)                    ; stop the server with its last buffer
+  (eglot-events-buffer-config '(:size 0))   ; no per-server JSON-RPC log
+  :bind (:map eglot-mode-map
+              ("C-c l r" . eglot-rename)
+              ("C-c l a" . eglot-code-actions)
+              ("C-c l o" . eglot-code-action-organize-imports)
+              ("C-c l f" . eglot-format)
+              ("C-c l d" . eldoc-doc-buffer)
+              ("M-n" . flymake-goto-next-error)
+              ("M-p" . flymake-goto-prev-error))
+  :config
+  (defun my/tsc-lsp-p (tsc)
+    "Non-nil if TSC is a TypeScript 7+ binary (the ones that speak LSP)."
+    (and tsc (file-executable-p tsc)
+         (let ((v (with-temp-buffer
+                    (ignore-errors (call-process tsc nil t nil "--version"))
+                    (buffer-string))))
+           (and (string-match "Version \\([0-9]+\\)" v)
+                (>= (string-to-number (match-string 1 v)) 7)))))
+  (defun my/eglot-tsc-contact (&rest _)
+    "Contact for eglot: the project's tsc if it is 7+, else the global one."
+    (let* ((root (and-let* ((pr (project-current))) (project-root pr)))
+           (local (and root (expand-file-name "node_modules/.bin/tsc" root)))
+           (tsc (if (my/tsc-lsp-p local) local (executable-find "tsc"))))
+      (list tsc "--lsp" "--stdio")))
+  (add-to-list 'eglot-server-programs
+               '(((typescript-ts-mode :language-id "typescript")
+                  (tsx-ts-mode :language-id "typescriptreact"))
+                 . my/eglot-tsc-contact))
+  ;; tsc registers `workspace/didChangeConfiguration' dynamically; eglot has no
+  ;; handler for that and warns on every connection. Accept it silently.
+  (cl-defmethod eglot-register-capability
+    (_server (_method (eql workspace/didChangeConfiguration)) _id &rest _)
+    nil))
+
+;; Format on save with oxfmt (the vp toolchain's formatter), in the modes it
+;; owns and only where a project-local or global oxfmt exists. The config is the
+;; project root's vite.config.ts (its `fmt' block), as `vp fmt' itself reads it.
+;; TODO oxlint diagnostics: eglot runs one server per buffer, so `oxlint --lsp'
+;; can't ride alongside tsc; a flymake backend is the likely route.
+(use-package apheleia
+  :ensure t
+  :hook ((typescript-ts-mode tsx-ts-mode) . my/apheleia-mode-if-oxfmt)
+  :config
+  (defun my/oxfmt-config-args ()
+    "--config for the project root's vite.config.ts, when there is one."
+    (and-let* ((pr (project-current))
+               (cfg (expand-file-name "vite.config.ts" (project-root pr)))
+               ((file-exists-p cfg)))
+      (list "--config" cfg)))
+  (defun my/apheleia-mode-if-oxfmt ()
+    (when (or (executable-find "oxfmt")
+              (locate-dominating-file default-directory "node_modules/.bin/oxfmt"))
+      (apheleia-mode)))
+  (push '(oxfmt . (npx "oxfmt" "--stdin-filepath" filepath (my/oxfmt-config-args)))
+        apheleia-formatters)
+  (setf (alist-get 'typescript-ts-mode apheleia-mode-alist) 'oxfmt
+        (alist-get 'tsx-ts-mode apheleia-mode-alist) 'oxfmt))
 
 ;; Theme: modus tinted (warm paper / dark), following the macOS appearance via
 ;; the emacs-plus `ns-system-appearance' hook.
