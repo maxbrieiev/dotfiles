@@ -167,6 +167,7 @@ Follows symlinks."
   :bind (:map pixel-scroll-precision-mode-map
               ([remap scroll-up-command]   . my/pixel-scroll-page-down)
               ([remap scroll-down-command] . my/pixel-scroll-page-up)))
+(use-package which-key    :ensure nil :custom (which-key-mode t))
 (use-package savehist     :ensure nil :custom (savehist-mode t))
 (use-package recentf      :ensure nil :custom (recentf-mode t))
 (use-package repeat       :ensure nil :custom (repeat-mode t))
