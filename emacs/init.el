@@ -305,6 +305,20 @@ Follows symlinks."
   (magit-diff-refine-hunk t)
   (magit-save-repository-buffers 'dontask))
 
+;; Changed lines in the fringe (VS Code's gutter), live and Magit-aware.
+;; C-x v [ / ] jump between hunks, C-x v * shows the old text inline.
+(use-package diff-hl
+  :ensure t
+  :hook ((magit-pre-refresh . diff-hl-magit-pre-refresh)
+         (magit-post-refresh . diff-hl-magit-post-refresh)
+         (dired-mode . diff-hl-dired-mode))
+  :custom
+  (diff-hl-draw-borders nil)            ; solid bars
+  :init
+  (global-diff-hl-mode)
+  (diff-hl-flydiff-mode)      ; update while editing, not only on save
+  (global-diff-hl-show-hunk-mouse-mode)) ; click a fringe mark to see the old text
+
 ;; Language support: Emacs 31's built-in tree-sitter modes + eglot.
 ;; `treesit-enabled-modes' is the switch: without it the `*-ts-mode-maybe'
 ;; dispatchers fall back to a plain mode (or `fundamental-mode') when the
