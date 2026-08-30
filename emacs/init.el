@@ -1,12 +1,16 @@
 ;;; init.el -*- lexical-binding: t; -*-
 ;;
 ;; Bootstrap rules:
-;; - `(require 'package)' is needed: with zero installed packages Emacs 30 skips
-;;   loading package.el at startup, so `package-archives' would be void.
+;; - `(require 'package)' is needed: with zero installed packages Emacs does not
+;;   load package.el at startup, so `package-archives' would be void.
 ;; - Auto-installing native modules (ghostel) must be non-interactive, or a y/n
 ;;   prompt fires mid-init and use-package flattens it to "Cannot load X".
 ;; Fresh-machine test after touching bootstrap: mv ~/.emacs.d/elpa{,.bak}, relaunch,
-;; expect an error-free startup with everything self-installed.
+;; expect an error-free startup with everything self-installed. Two warnings are
+;; normal on that first start only: embark's "embark-consult should be installed"
+;; (compiling embark-consult during its install loads consult before
+;; embark-consult itself) and ghostel's "native module not found" (the download
+;; it triggers is asynchronous).
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -105,16 +109,7 @@ Follows symlinks."
 
   ;; Keep the cursor out of the minibuffer prompt (pairs with
   ;; `minibuffer-prompt-properties' above).
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
-  ;; Prompt indicator for `completing-read-multiple' (built into Emacs 31).
-  (when (< emacs-major-version 31)
-    (advice-add #'completing-read-multiple :filter-args
-                (lambda (args)
-                  (cons (format "[CRM%s] %s"
-                                (string-replace "[ \t]*" "" crm-separator)
-                                (car args))
-                        (cdr args))))))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode))
 
 ;; C-t is my personal prefix: everything of my own lives under it (transient
 ;; menus now, maybe modal editing later). It replaces transpose-chars, which is
@@ -417,9 +412,10 @@ Follows symlinks."
         (alist-get 'tsx-ts-mode apheleia-mode-alist) 'oxfmt))
 
 ;; Theme: modus tinted (warm paper / dark), following the macOS appearance via
-;; the emacs-plus `ns-system-appearance' hook.
+;; the emacs-plus `ns-system-appearance' hook. The themes ship with Emacs in
+;; etc/themes, where `require' does not look; `require-theme' loads them.
 (use-package modus-themes
-  :ensure t
+  :ensure nil
   :demand t  ; :bind would otherwise defer loading, and the theme with it
   :custom
   (modus-themes-to-toggle '(modus-operandi-tinted modus-vivendi-tinted))
@@ -434,6 +430,7 @@ Follows symlinks."
      (border-mode-line-inactive unspecified)))
   :bind ("<f5>" . modus-themes-toggle)
   :init
+  (require-theme 'modus-themes)
   (defun my/modus-themes-follow-system (appearance)
     "Load the modus theme matching macOS APPEARANCE (`light' or `dark')."
     (modus-themes-load-theme
