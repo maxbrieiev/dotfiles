@@ -15,6 +15,7 @@
 ;; prompt renders inside Emacs too.
 (push '(font . "MesloLGS NF-13") default-frame-alist)
 (setq frame-inhibit-implied-resize t)
+(setq frame-resize-pixelwise t)
 (setq inhibit-startup-screen t)
 
 ;; Quiet async native-compilation warnings.

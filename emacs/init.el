@@ -27,6 +27,7 @@
   (make-backup-files nil)
   (auto-save-default nil)
   (create-lockfiles nil)
+  (view-read-only t)
 
   ;; macOS keyboard: right ⌘ acts as Control.
   (ns-right-command-modifier 'control)
@@ -39,10 +40,17 @@
   (indent-tabs-mode nil)
   (truncate-lines t)
   (auto-hscroll-mode 'current-line)
-  (mouse-yank-at-point t)
   (next-screen-context-lines 7)
   (show-paren-context-when-offscreen 'child-frame)
   (scroll-preserve-screen-position t)
+  (electric-pair-mode t)
+  (save-interprogram-paste-before-kill t)
+
+  ;; Mouse.
+  (mouse-yank-at-point t)
+  (mouse-drag-and-drop-region t)                ; drag the region to move it,
+  (mouse-drag-and-drop-region-cross-program t)  ; also into other apps
+  (mouse-drag-mode-line-buffer t)               ; drag the file out of the mode line
 
   ;; UI.
   (initial-scratch-message nil)
@@ -58,6 +66,7 @@
   (enable-recursive-minibuffers t)
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (read-extended-command-predicate #'command-completion-default-include-p)  ; M-x: hide inapplicable commands
+  (shell-command-prompt-show-cwd t)          ; M-! shows where it runs
   (tab-always-indent 'complete)              ; TAB indents, then completes
   (text-mode-ispell-word-completion nil)     ; no dictionary words in completion
   (help-window-select t)
@@ -127,6 +136,7 @@ Follows symlinks."
   :bind (:map dired-mode-map ("C-t" . my/prefix-map))  ; not image-dired's prefix
   :custom
   (dired-kill-when-opening-new-dired-buffer t)
+  (dired-mouse-drag-files t)        ; drag a file into Finder, a browser, ...
   (dired-listing-switches "-Alh"))  ; BSD ls: no --group-directories-first
 
 (use-package isearch
@@ -176,6 +186,32 @@ Follows symlinks."
 (use-package savehist     :ensure nil :custom (savehist-mode t))
 (use-package recentf      :ensure nil :custom (recentf-mode t))
 (use-package repeat       :ensure nil :custom (repeat-mode t))
+(use-package saveplace    :ensure nil :custom (save-place-mode t))
+(use-package xref         :ensure nil :custom (global-xref-mouse-mode t))  ; C-click jumps to the definition
+(use-package compile      :ensure nil :custom (compilation-scroll-output 'first-error))
+(use-package tab-bar
+  :ensure nil
+  :custom
+  (tab-bar-history-mode t)  ; window-layout undo/redo: C-c <left> / C-c <right>
+  (tab-bar-show 0))         ; the bar appears with the second tab only
+;; Byte-compile + checkdoc diagnostics while editing Lisp libraries — not the
+;; init files, which aren't libraries (deferred loading, helpers inside
+;; use-package bodies, no package header) and would only get noise for it.
+;; M-x flymake-mode still works there on demand.
+(use-package flymake
+  :ensure nil
+  :hook (emacs-lisp-mode . my/flymake-elisp-library-mode)
+  :bind (:map flymake-mode-map
+              ("M-n" . flymake-goto-next-error)
+              ("M-p" . flymake-goto-prev-error))
+  :init
+  (defun my/flymake-elisp-library-mode ()
+    "Enable `flymake-mode' in a file buffer that is not an init file."
+    (when (and buffer-file-name
+               (not (member (file-truename buffer-file-name)
+                            (mapcar #'file-truename
+                                    (delq nil (list user-init-file early-init-file))))))
+      (flymake-mode))))
 
 ;; Completion stack: vertico (the one candidate-picking UI, for minibuffer
 ;; prompts and, via consult, for in-buffer completion) + orderless (matching)
@@ -359,9 +395,7 @@ Follows symlinks."
               ("C-c l a" . eglot-code-actions)
               ("C-c l o" . eglot-code-action-organize-imports)
               ("C-c l f" . eglot-format)
-              ("C-c l d" . eldoc-doc-buffer)
-              ("M-n" . flymake-goto-next-error)
-              ("M-p" . flymake-goto-prev-error))
+              ("C-c l d" . eldoc-doc-buffer))
   :config
   (defun my/tsc-lsp-p (tsc)
     "Non-nil if TSC is a TypeScript 7+ binary (the ones that speak LSP)."
