@@ -58,7 +58,7 @@
   (enable-recursive-minibuffers t)
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (read-extended-command-predicate #'command-completion-default-include-p)  ; M-x: hide inapplicable commands
-  (tab-always-indent 'complete)              ; TAB indents, then completes (corfu)
+  (tab-always-indent 'complete)              ; TAB indents, then completes
   (text-mode-ispell-word-completion nil)     ; no dictionary words in completion
   (help-window-select t)
   (help-enable-variable-value-editing t)
@@ -177,9 +177,11 @@ Follows symlinks."
 (use-package recentf      :ensure nil :custom (recentf-mode t))
 (use-package repeat       :ensure nil :custom (repeat-mode t))
 
-;; Completion stack: vertico (minibuffer UI) + orderless (matching) +
-;; marginalia (annotations) + consult (commands) + embark (actions) +
-;; corfu/cape (in-buffer completion).
+;; Completion stack: vertico (the one candidate-picking UI, for minibuffer
+;; prompts and, via consult, for in-buffer completion) + orderless (matching)
+;; + marginalia (annotations) + consult (commands) + embark (actions) + cape
+;; (extra in-buffer backends). Nothing pops up unasked; the only automatic
+;; element is Emacs's completion preview below.
 
 (use-package vertico
   :ensure t
@@ -221,6 +223,10 @@ Follows symlinks."
 
 (use-package consult
   :ensure t
+  ;; In-buffer completion (TAB, C-M-i, also inside M-:) picks its candidates
+  ;; in the minibuffer, so vertico is the one candidate UI. TAB with a single
+  ;; candidate just inserts it.
+  :init (setq completion-in-region-function #'consult-completion-in-region)
   :bind (([remap switch-to-buffer] . consult-buffer)
          ([remap switch-to-buffer-other-window] . consult-buffer-other-window)
          ([remap project-switch-to-buffer] . consult-project-buffer)
@@ -278,22 +284,16 @@ Follows symlinks."
   :demand t  ; a :hook alone defers it forever, and embark warns it's missing
   :hook (embark-collect-mode . consult-preview-at-point-mode))
 
-(use-package corfu
-  :ensure t
-  :custom
-  (corfu-auto t)
-  (corfu-cycle t)
-  (corfu-quick1 "nthueoa")
-  (corfu-quick2 "id")
-  :bind (:map corfu-map
-              ("M-q" . corfu-quick-complete)
-              ("C-q" . corfu-quick-exit))
-  :init
-  (global-corfu-mode)
-  (corfu-history-mode)    ; sort by recency (persisted via savehist)
-  (corfu-popupinfo-mode)  ; docs popup next to the candidate (ex corfu-doc)
-  :config
-  (add-to-list 'savehist-additional-variables 'corfu-history))
+;; The one automatic element while editing: Emacs's inline preview of the
+;; first candidate (ghost text after three characters of a symbol). TAB
+;; accepts it, M-n / M-p cycle, M-i lists all candidates (in the minibuffer,
+;; like TAB); typing on ignores it.
+(use-package completion-preview
+  :ensure nil
+  :custom (global-completion-preview-mode t)
+  :bind (:map completion-preview-active-mode-map
+              ("M-n" . completion-preview-next-candidate)
+              ("M-p" . completion-preview-prev-candidate)))
 
 ;; Extra completion-at-point backends (also under C-c p on demand).
 (use-package cape
