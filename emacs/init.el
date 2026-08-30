@@ -87,9 +87,8 @@
   ;; Two Math for them. (Emoji need nothing: Apple Color Emoji is picked anyway.)
   (set-fontset-font t 'symbol "Apple Symbols" nil 'prepend)
 
-  ;; Unbind suspend-frame (useless in a GUI) and transpose-chars.
+  ;; Unbind suspend-frame (useless in a GUI).
   (keymap-unset global-map "C-z" t)
-  (keymap-unset global-map "C-t" t)
 
   ;; Emacs has no built-in command to visit the init file.
   (defun my/visit-init-file ()
@@ -117,9 +116,20 @@ Follows symlinks."
                                 (car args))
                         (cdr args))))))
 
+;; C-t is my personal prefix: everything of my own lives under it (transient
+;; menus now, maybe modal editing later). It replaces transpose-chars, which is
+;; not missed, and sits on the Dvorak home row. Modes that bind C-t themselves
+;; (dired's image-dired prefix, ghostel terminals) are told below to yield it,
+;; so C-t <key> means the same thing in every buffer.
+(defvar-keymap my/prefix-map
+  :doc "Personal commands, on C-t."
+  :prefix t)
+(keymap-global-set "C-t" 'my/prefix-map)
+
 ;; Built-in features with their own settings (`:ensure nil' marks a built-in).
 (use-package dired
   :ensure nil
+  :bind (:map dired-mode-map ("C-t" . my/prefix-map))  ; not image-dired's prefix
   :custom
   (dired-kill-when-opening-new-dired-buffer t)
   (dired-listing-switches "-Alh"))  ; BSD ls: no --group-directories-first
@@ -199,9 +209,9 @@ Follows symlinks."
               ("M-DEL" . vertico-directory-delete-word))
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
-;; Space-separated patterns in any order. The default affix dispatchers
-;; replace the 2024 config's hand-written ones: suffix/prefix ! = not,
-;; = literal, ^ literal-prefix, ~ flex, , initialism, & annotation, % char-fold.
+;; Space-separated patterns in any order. Default affix dispatchers:
+;; suffix/prefix ! = not, = literal, ^ literal-prefix, ~ flex, , initialism,
+;; & annotation, % char-fold.
 (use-package orderless
   :ensure t
   :custom
@@ -220,7 +230,7 @@ Follows symlinks."
          ([remap switch-to-buffer-other-window] . consult-buffer-other-window)
          ([remap project-switch-to-buffer] . consult-project-buffer)
          ([remap bookmark-jump] . consult-bookmark)
-         ([remap goto-line] . consult-goto-line)  ; the 2024 remap had a `go-to-line' typo
+         ([remap goto-line] . consult-goto-line)
          ([remap yank-pop] . consult-yank-pop)
          ([remap imenu] . consult-imenu)
          ("M-s l" . consult-line)
@@ -261,7 +271,7 @@ Follows symlinks."
 
 (use-package embark
   :ensure t
-  ;; C-; instead of the 2024 M-., which is reserved for xref-find-definitions.
+  ;; C-; rather than M-., which stays with xref-find-definitions.
   :bind (("C-." . embark-act)
          ("C-;" . embark-dwim)
          ("C-h B" . embark-bindings))
@@ -453,6 +463,11 @@ Follows symlinks."
   ;; No-break spaces are layout in a terminal, not text — don't underline them.
   :hook (ghostel-mode . (lambda () (setq-local nobreak-char-display nil)))
   :config
+  ;; Let C-t reach Emacs (my prefix) instead of the program, on top of the
+  ;; default exceptions (C-c, C-x, ...); the :set rebuilds the keymap. A
+  ;; literal C-t still goes through with C-c C-q (`ghostel-send-next-key').
+  (customize-set-variable 'ghostel-keymap-exceptions
+                          (cons "C-t" ghostel-keymap-exceptions))
   ;; Trackpad scrolling in fullscreen TUIs (Claude Code, vim, less…). On the
   ;; alternate screen ghostel forwards every wheel event to the program as
   ;; one full button-4/5 tick and ignores the event's pixel delta; a macOS
@@ -485,7 +500,7 @@ Follows symlinks."
 
 (use-package claude-code-ide
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-  :bind ("C-c c" . claude-code-ide-menu)
+  :bind (:map my/prefix-map ("c" . claude-code-ide-menu))
   :custom (claude-code-ide-terminal-backend 'ghostel)
   :config (claude-code-ide-emacs-tools-setup))
 
