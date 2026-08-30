@@ -529,11 +529,36 @@ Follows symlinks."
           sent))))
   (advice-add 'ghostel--forward-scroll-event :around #'my/ghostel-forward-scroll-by-lines))
 
+;; Claude Code, in a ghostel terminal that is a buffer like any other: C-t C-t
+;; flips the selected window between Claude and what it showed before (C-x 1
+;; for the whole frame, C-c <left> to get the layout back), and C-x b inside it
+;; reaches terminals and magit in place. A diff Claude proposes takes the frame
+;; as an ediff session; quitting it restores the layout.
 (use-package claude-code-ide
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-  :bind (:map my/prefix-map ("c" . claude-code-ide-menu))
-  :custom (claude-code-ide-terminal-backend 'ghostel)
-  :config (claude-code-ide-emacs-tools-setup))
+  :bind (:map my/prefix-map
+              ("c" . claude-code-ide-menu)
+              ("C-t" . my/claude-flip))
+  :custom
+  (claude-code-ide-terminal-backend 'ghostel)
+  (claude-code-ide-use-side-window nil)
+  (claude-code-ide-show-claude-window-in-ediff nil)
+  :config
+  (claude-code-ide-emacs-tools-setup)
+  (defun my/claude-flip ()
+    "Show this project's Claude in the selected window, starting it if needed.
+From Claude, go back to what the window showed before.  A prefix argument
+picks the instance."
+    (interactive)
+    (if (bound-and-true-p claude-code-ide--session)
+        (previous-buffer)
+      (if-let* ((session (claude-code-ide--resolve-session 'auto))
+                (buffer (claude-code-ide-mcp-session-buffer session)))
+          (if-let* ((window (get-buffer-window buffer 'visible)))
+              (progn (select-window window)
+                     (select-frame-set-input-focus (window-frame window)))
+            (pop-to-buffer-same-window buffer))
+        (claude-code-ide)))))
 
 ;; Server for `emacsclient' ($EDITOR from ~/.zprofile) and Emacs Client.app.
 (use-package server
